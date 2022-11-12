@@ -154,45 +154,6 @@
       </widget>
       <widget class="QWidget" name="widget_2" native="true">
        <layout class="QGridLayout" name="gridLayout_13">
-        <item row="2" column="0">
-         <layout class="QGridLayout" name="gridLayout_10">
-          <item row="2" column="0">
-           <widget class="QTextBrowser" name="deep_learning_result_textBrowser">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Deep Learning</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>检测结果为：</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="3" column="0" colspan="2">
-         <layout class="QGridLayout" name="gridLayout_12">
-          <item row="0" column="0">
-           <widget class="QPushButton" name="start_record_test_pushButton">
-            <property name="text">
-             <string>录制声音</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
         <item row="1" column="1" rowspan="2">
          <layout class="QGridLayout" name="gridLayout_11">
           <item row="0" column="0">
@@ -239,6 +200,45 @@
           </item>
          </layout>
         </item>
+        <item row="2" column="0">
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="2" column="0">
+           <widget class="QTextBrowser" name="deep_learning_result_textBrowser">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Deep Learning</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>检测结果为：</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="3" column="0" colspan="2">
+         <layout class="QGridLayout" name="gridLayout_12">
+          <item row="0" column="0">
+           <widget class="QPushButton" name="start_record_test_pushButton">
+            <property name="text">
+             <string>录制声音</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item row="0" column="0" colspan="2">
          <layout class="QGridLayout" name="gridLayout_8">
           <item row="0" column="0">
@@ -258,7 +258,7 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QWidget" name="" native="true">
+     <widget class="QWidget" name="widget" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QRadioButton" name="zh_radioButton">
@@ -288,7 +288,7 @@
      <x>0</x>
      <y>0</y>
      <width>1164</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

@@ -1,11 +1,39 @@
 import os
+import sys
 import time
 
-from PyQt5.QtWidgets import QMainWindow
-
+import numpy as np
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
+from PyQt5.Qt import QThread, pyqtSignal
+from Core.Wave2Vec import SdrEnModel, SdrZhModel
 from GUI.frontend import Ui_MainWindow
 
-from Utils.record import record_all, record_once
+from Utils.record import record_once
+
+app = QApplication(sys.argv)
+
+
+class GuiRecord(QThread):
+    finish_signal = pyqtSignal(dict)
+
+    def __init__(self, outputdir, label, finish_callback=None):
+        super().__init__()
+        self.outputdir = outputdir
+        self.label = label
+        if finish_callback is not None:
+            self.finish_signal.connect(finish_callback)
+        self.record_data = None
+
+    def run(self):
+        try:
+            self.record_data = record_once(1, 16000, 3, self.label, output_dir=self.outputdir)
+        except:
+            self.finish_signal.emit({'status': 404, 'msg': 'Record Failed'})
+            return
+        self.finish_signal.emit({'status': 0, 'msg': 'Record successfully'})
+
+    def get_record(self) -> np.ndarray:
+        return self.record_data
 
 
 class SoundGuiBackend(QMainWindow, Ui_MainWindow):
@@ -19,17 +47,27 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         self.zh_radioButton.setChecked(True)
         self.en_radioButton.setChecked(False)
 
-    def sequence_record_train(self, path):
+        self.record_train_thread = None
+        self.record_test_thread = None
+
+        print("Loading Models")
+        self.dl_en_model = SdrEnModel()
+        self.ml_en_model = None
+        self.dl_zh_model = SdrZhModel()
+        self.ml_zh_model = None
+        print("Models Loaded")
+
+    def sequence_record_train(self, outputdir):
         """
         录制训练集数字序列
         :return:
         """
-        sequence = self.digital_sequence_textEdit.toPlainText()
-        file_name = time.time()
-        file = os.path.join(path + sequence + str(file_name) + ".wav")
-        record_all(5, output_dir=file)
+        label = self.digital_sequence_textEdit.toPlainText()
+        self.record_train_thread = GuiRecord(outputdir, label, self.record_callback)
+        self.record_train_thread.start()
+        # record_once(1, 16000, 4, label, outputdir)
 
-    def single_record_train(self, path):
+    def single_record_train(self, outputdir):
         """
         录制训练集单个数字
         :return:
@@ -37,37 +75,68 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         self.digital_select_comboBox.currentText()
         number = self.digital_select_comboBox.currentText()
         number = int(number)
-        numberdict = {0: "zero/zero", 1: "one/one", 2: "two/two",
-                      3: "three/three", 4: "four/four",
-                      5: "five/five", 6: "six/six",
-                      7: "seven/seven", 8: "eight/eight",
-                      9: "nine/nine"}
-        file = numberdict.get(number)
-        record_once(1, 16000, 3, file, output_dir=path)
+        numberdict = {0: "zero", 1: "one", 2: "two",
+                      3: "three", 4: "four",
+                      5: "five", 6: "six",
+                      7: "seven", 8: "eight",
+                      9: "nine"}
+        label = numberdict.get(number)
+
+        self.record_train_thread = GuiRecord(outputdir, label, self.record_callback)
+        self.record_train_thread.start()
+        # record_once(1, 16000, 3, label, output_dir=outputdir)
+
+    def record_callback(self, data: dict):
+        dlg = QMessageBox(parent=self)
+        dlg.setWindowTitle('Record Success')
+        dlg.setText(data['msg'])
+        dlg.exec()
 
     def train_state_select(self):
         if self.train_single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
-            self.single_record_train("dataset_zh")
+            self.single_record_train("dataset_zh/single")
         elif self.train_single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
-            self.single_record_train("dataset_en")
+            self.single_record_train("dataset_en/single")
         elif self.train_digital_sequence_radioButton.isChecked() and self.zh_radioButton.isChecked():
-            self.sequence_record_train("dataset_zh/sequence/")
+            self.sequence_record_train("dataset_zh/seq/")
         else:
-            self.sequence_record_train("dataset_en/sequence/")
+            self.sequence_record_train("dataset_en/seq/")
 
+    # TODO: 机器学习/深度学习选项组合
     def single_zh_recognition(self):
+        data = self.record_test_thread.get_record()
+        label = self.dl_zh_model.predict_single(data)
+        self.deep_learning_result_textBrowser.setText(str(label))
         pass
 
     def single_en_recognition(self):
+        data = self.record_test_thread.get_record()
+        label = self.dl_en_model.predict_single(data)
+        self.deep_learning_result_textBrowser.setText(str(label))
         pass
 
     def sequence_zh_recognition(self):
+        data = self.record_test_thread.get_record()
+        labels = self.dl_zh_model.predict_seq(data)
+        self.deep_learning_result_textBrowser.setText(str(labels))
         pass
 
     def sequence_en_recognition(self):
+        data = self.record_test_thread.get_record()
+        labels = self.dl_en_model.predict_seq(data)
+        self.deep_learning_result_textBrowser.setText(str(labels))
         pass
 
     def test_state_select(self):
+        # 先录制
+        self.record_test_thread = GuiRecord('test', 'test')
+        self.record_test_thread.run()
+        # while self.record_train_thread.isRunning():
+        #     app.processEvents()
+        if self.record_test_thread.get_record() is None:
+            self.record_callback({'msg': 'Record Failed'})
+            return
+
         if self.test_single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
             self.single_zh_recognition()
         elif self.test_single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
