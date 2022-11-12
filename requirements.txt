@@ -1,0 +1,7 @@
+librosa
+transformers
+pydub
+sounddevice
+huggingsound
+PyQt5
+tqdm
