@@ -6,6 +6,7 @@ import numpy as np
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
 from PyQt5.Qt import QThread, pyqtSignal
 from Core.Wave2Vec import SdrEnModel, SdrZhModel
+from DTW_MFCC.VoiceRecog import train_model, speech_recognition
 from GUI.frontend import Ui_MainWindow
 
 from Utils.record import record_once
@@ -40,22 +41,39 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)  # 创建窗体对象
-        self.start_record_test_pushButton.clicked.connect(self.test_state_select)
-        self.start_record_train_pushButton.clicked.connect(self.train_state_select)
-        self.train_single_digital_radioButton.setChecked(True)
-        self.test_single_digital_radioButton.setChecked(True)
+        self.start_record_test_pushButton.clicked.connect(self.start_recognition)
+        self.start_record_train_pushButton.clicked.connect(self.start_recode)
+        self.single_digital_radioButton.setChecked(True)
+        self.single_digital_radioButton.setChecked(True)
         self.zh_radioButton.setChecked(True)
         self.en_radioButton.setChecked(False)
 
         self.record_train_thread = None
         self.record_test_thread = None
-
+        self.mode = 0
+        """
+        模式选择：
+            0: 中文 单个数字
+            1: 英文 单个数字
+            2: 中文 数字序列
+            3: 英文 数字序列
+        """
         print("Loading Models")
         self.dl_en_model = SdrEnModel()
         self.ml_en_model = None
         self.dl_zh_model = SdrZhModel()
         self.ml_zh_model = None
         print("Models Loaded")
+
+    def mode_select(self):
+        if self.single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
+            self.mode = 0
+        elif self.single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
+            self.mode = 1
+        elif self.digital_sequence_radioButton.isChecked() and self.zh_radioButton.isChecked():
+            self.mode = 2
+        else:
+            self.mode = 3
 
     def sequence_record_train(self, outputdir):
         """
@@ -92,28 +110,39 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         dlg.setText(data['msg'])
         dlg.exec()
 
-    def train_state_select(self):
-        if self.train_single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
+    def start_recode(self):
+        self.mode_select()
+        if self.mode == 0:
             self.single_record_train("dataset_zh/single")
-        elif self.train_single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
+        elif self.mode == 1:
             self.single_record_train("dataset_en/single")
-        elif self.train_digital_sequence_radioButton.isChecked() and self.zh_radioButton.isChecked():
+        elif self.mode == 2:
             self.sequence_record_train("dataset_zh/seq/")
         else:
             self.sequence_record_train("dataset_en/seq/")
 
+    def start_train(self):
+        if self.mode == 0:
+            self.ml_zh_model = train_model("dataset_zh")
+        elif self.mode == 1:
+            self.ml_en_model = train_model("dataset_en")
+
     # TODO: 机器学习/深度学习选项组合
     def single_zh_recognition(self):
         data = self.record_test_thread.get_record()
-        label = self.dl_zh_model.predict_single(data)
+        if self.ml_radioButton.isChecked():
+            label = speech_recognition(self.ml_zh_model, data)
+        else:
+            label = self.dl_zh_model.predict_single(data)
         self.deep_learning_result_textBrowser.setText(str(label))
-        pass
 
     def single_en_recognition(self):
         data = self.record_test_thread.get_record()
-        label = self.dl_en_model.predict_single(data)
+        if self.ml_radioButton.isChecked():
+            label = speech_recognition(self.ml_en_model, data)
+        else:
+            label = self.dl_en_model.predict_single(data)
         self.deep_learning_result_textBrowser.setText(str(label))
-        pass
 
     def sequence_zh_recognition(self):
         data = self.record_test_thread.get_record()
@@ -127,7 +156,7 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         self.deep_learning_result_textBrowser.setText(str(labels))
         pass
 
-    def test_state_select(self):
+    def start_recognition(self):
         # 先录制
         self.record_test_thread = GuiRecord('test', 'test')
         self.record_test_thread.run()
@@ -137,11 +166,11 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             self.record_callback({'msg': 'Record Failed'})
             return
 
-        if self.test_single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
+        if self.mode == 0:
             self.single_zh_recognition()
-        elif self.test_single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
+        elif self.mode == 1:
             self.single_en_recognition()
-        elif self.test_digital_sequence_radioButton.isChecked() and self.zh_radioButton.isChecked():
+        elif self.mode == 2:
             self.sequence_zh_recognition()
         else:
             self.sequence_en_recognition()
