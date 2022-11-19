@@ -106,13 +106,7 @@ def train_model(path):
     return MFCC_models
 
 
-def speech_recognition(MFCC_models, path):
-    f = wave.open(path, "rb")
-    params = f.getparams()
-    nchannels, _, _, nframes = params[:4]
-    str_data = f.readframes(nframes)
-    wave_data = np.frombuffer(str_data, dtype='int16')
-    f.close()
+def speech_recognition(MFCC_models, wave_data):
     end_point_detect = EndPointDetect(wave_data)
 
     # 存储端点检测后的语音文件

@@ -131,7 +131,7 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
     def single_zh_recognition(self):
         data = self.record_test_thread.get_record()
         if self.ml_radioButton.isChecked():
-            label = speech_recognition(self.ml_zh_model, data)
+            label = speech_recognition(self.ml_zh_model, np.array(data))
         else:
             label = self.dl_zh_model.predict_single(data)
         self.deep_learning_result_textBrowser.setText(str(label))
@@ -139,7 +139,8 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
     def single_en_recognition(self):
         data = self.record_test_thread.get_record()
         if self.ml_radioButton.isChecked():
-            label = speech_recognition(self.ml_en_model, data)
+            pass
+            # label = speech_recognition(self.ml_en_model, data)
         else:
             label = self.dl_en_model.predict_single(data)
         self.deep_learning_result_textBrowser.setText(str(label))
