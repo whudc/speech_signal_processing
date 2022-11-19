@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import wave
 import numpy as np
-from DTW_MFCC.endpointDetection import EndPointDetect
 import scipy.io.wavfile as wav
 from python_speech_features import *
-
 
 # 读取已经用 HTK 计算好的 MFCC 特征
 
@@ -107,17 +105,8 @@ def train_model(path):
 
 
 def speech_recognition(MFCC_models, wave_data):
-    end_point_detect = EndPointDetect(wave_data)
-
-    # 存储端点检测后的语音文件
-    N = end_point_detect.wave_data_detected
-    m = 0
-    print(N)
-    while m < len(N) - 1:
-        save_wave_file("../test/recordedVoice_after.wav", wave_data[N[m] * 256: N[m + 1] * 256])
-        m = m + 2
-
-    MFCC_recorded = extract_MFCC("../test/recordedVoice_after.wav")
+    wav.write("./test/recordedVoice_after.wav", 16000, wave_data)
+    MFCC_recorded = extract_MFCC("./test/recordedVoice_after.wav")
 
     # 进行匹配
     flag = 0
