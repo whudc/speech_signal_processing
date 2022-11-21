@@ -59,12 +59,12 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             2: 中文 数字序列
             3: 英文 数字序列
         """
-        # print("Loading Models")
-        # self.dl_en_model = SdrEnModel()
-        # self.ml_en_model = None
-        # self.dl_zh_model = SdrZhModel()
-        # self.ml_zh_model = None
-        # print("Models Loaded")
+        print("Loading Models")
+        self.dl_en_model = SdrEnModel()
+        self.ml_en_model = None
+        self.dl_zh_model = SdrZhModel()
+        self.ml_zh_model = None
+        print("Models Loaded")
 
     def mode_select(self):
         if self.single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
