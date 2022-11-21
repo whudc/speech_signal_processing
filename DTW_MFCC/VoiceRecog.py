@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
+import os
 import wave
 import numpy as np
 import scipy.io.wavfile as wav
 from python_speech_features import *
+from scipy import signal
+
+from DTW_MFCC.endpointDetection import EndPointDetect
+
 
 # 读取已经用 HTK 计算好的 MFCC 特征
 
@@ -18,14 +23,17 @@ def extract_MFCC(file):
 
 def getMFCC(datapath, train_num):
     MFCC = []
-    labels = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
-    for label in labels:
+    files = os.listdir(datapath)  # 得到文件夹下的所有文件名称
+    for file in files:  # 遍历文件夹
         MFCC_rows = []
-        for j in range(train_num):
-            file_name = datapath + label + "_" + str(j + 1) + ".wav"
-            feature = extract_MFCC(file_name)
-            MFCC_rows.append(feature)
-        MFCC.append(MFCC_rows)
+        if file != "sequence":
+            paths = os.path.join(datapath, file)
+            paths = os.listdir(paths)
+            for open_path in paths:
+                file_name = os.path.join(datapath, file + '/' + open_path)
+                feature = extract_MFCC(file_name)
+                MFCC_rows.append(feature)
+            MFCC.append(MFCC_rows)
     return MFCC
 
 
@@ -95,6 +103,12 @@ def save_wave_file(filename, data):
     wf.close()
 
 
+def lowpass(wav_data, order, fre_c):
+    b, a = signal.butter(order, fre_c)
+    filtedData = signal.filtfilt(b, a, wav_data)  # data为要过滤的信号
+    return filtedData
+
+
 def train_model(path):
     # 存储所有语音文件的 MFCC 特征
     # 读取已经用 HTK 计算好的 MFCC 特征
@@ -105,7 +119,18 @@ def train_model(path):
 
 
 def speech_recognition(MFCC_models, wave_data):
-    wav.write("./test/recordedVoice_after.wav", 16000, wave_data)
+    wav.write("./test/recordedVoice_before.wav", 16000, wave_data)
+    # 对刚录制的语音进行端点检测
+    sample_frequency, audio_sequence = wav.read("./test/recordedVoice_before.wav")
+    filterData = lowpass(wave_data, 99, 5000 / sample_frequency)
+    end_point_detect = EndPointDetect(filterData)
+    # 存储端点检测后的语音文件
+    N = end_point_detect.wave_data_detected
+    m = 0
+    print(N)
+    while m < len(N):
+        save_wave_file("./test/recordedVoice_after.wav", wave_data[N[m] * 256: N[m + 1] * 256])
+        m = m + 2
     MFCC_recorded = extract_MFCC("./test/recordedVoice_after.wav")
 
     # 进行匹配
@@ -117,6 +142,3 @@ def speech_recognition(MFCC_models, wave_data):
             min_dis = dis
             flag = j
     return flag
-if __name__ == "__main__":
-    MFCC_models = train_model("dataset_en/")
-    speech_recognition(MFCC_models, "test.wav")

@@ -43,6 +43,7 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         self.setupUi(self)  # 创建窗体对象
         self.start_record_test_pushButton.clicked.connect(self.start_recognition)
         self.start_record_train_pushButton.clicked.connect(self.start_recode)
+        self.start_train_pushButton.clicked.connect(self.start_train)
         self.single_digital_radioButton.setChecked(True)
         self.single_digital_radioButton.setChecked(True)
         self.zh_radioButton.setChecked(True)
@@ -58,12 +59,12 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             2: 中文 数字序列
             3: 英文 数字序列
         """
-        print("Loading Models")
-        self.dl_en_model = SdrEnModel()
-        self.ml_en_model = None
-        self.dl_zh_model = SdrZhModel()
-        self.ml_zh_model = None
-        print("Models Loaded")
+        # print("Loading Models")
+        # self.dl_en_model = SdrEnModel()
+        # self.ml_en_model = None
+        # self.dl_zh_model = SdrZhModel()
+        # self.ml_zh_model = None
+        # print("Models Loaded")
 
     def mode_select(self):
         if self.single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
@@ -126,6 +127,7 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             self.ml_zh_model = train_model("dataset_zh")
         elif self.mode == 1:
             self.ml_en_model = train_model("dataset_en")
+        QMessageBox.information(self, '提示', '训练完成')
 
     # TODO: 机器学习/深度学习选项组合
     def single_zh_recognition(self):
