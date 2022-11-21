@@ -3,7 +3,7 @@ import os
 import wave
 import numpy as np
 import scipy.io.wavfile as wav
-from python_speech_features import *
+from python_speech_features import mfcc, delta
 from scipy import signal
 import re
 
@@ -116,7 +116,6 @@ def train_model(path):
     MFCC = getMFCC(path)
     # 取出其中的模板命令的 MFCC 特征
     MFCC_models = getMFCCModels(MFCC)
-    print(MFCC_models.shape)
     return MFCC_models
 
 
