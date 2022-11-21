@@ -59,12 +59,12 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             2: 中文 数字序列
             3: 英文 数字序列
         """
-        print("Loading Models")
-        self.dl_en_model = SdrEnModel()
-        self.ml_en_model = None
-        self.dl_zh_model = SdrZhModel()
-        self.ml_zh_model = None
-        print("Models Loaded")
+        # print("Loading Models")
+        # self.dl_en_model = SdrEnModel()
+        # self.ml_en_model = None
+        # self.dl_zh_model = SdrZhModel()
+        # self.ml_zh_model = None
+        # print("Models Loaded")
 
     def mode_select(self):
         if self.single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
@@ -124,9 +124,9 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
 
     def start_train(self):
         if self.mode == 0:
-            self.ml_zh_model = train_model("dataset_zh")
+            self.ml_zh_model = train_model("dataset_zh/single")
         elif self.mode == 1:
-            self.ml_en_model = train_model("dataset_en")
+            self.ml_en_model = train_model("dataset_en/single")
         QMessageBox.information(self, '提示', '训练完成')
 
     # TODO: 机器学习/深度学习选项组合
@@ -134,9 +134,10 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         data = self.record_test_thread.get_record()
         if self.ml_radioButton.isChecked():
             label = speech_recognition(self.ml_zh_model, np.array(data))
+            self.machine_learning_result_textBrowser.setText(str(label))
         else:
             label = self.dl_zh_model.predict_single(data)
-        self.deep_learning_result_textBrowser.setText(str(label))
+            self.deep_learning_result_textBrowser.setText(str(label))
 
     def single_en_recognition(self):
         data = self.record_test_thread.get_record()

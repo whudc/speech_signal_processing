@@ -5,15 +5,13 @@ import numpy as np
 import scipy.io.wavfile as wav
 from python_speech_features import *
 from scipy import signal
-
-from DTW_MFCC.endpointDetection import EndPointDetect
+import re
 
 
 # 读取已经用 HTK 计算好的 MFCC 特征
 
-def extract_MFCC(file):
-    fs, audio = wav.read(file)
-    wav_feature = mfcc(audio, samplerate=fs, numcep=13, winlen=0.025, winstep=0.01, nfilt=26, nfft=512, lowfreq=0,
+def extract_MFCC(audio):
+    wav_feature = mfcc(audio, samplerate=16000, numcep=13, winlen=0.025, winstep=0.01, nfilt=26, nfft=512, lowfreq=0,
                        highfreq=None, preemph=0.97)
     d_mfcc_feat = delta(wav_feature, 1)
     d_mfcc_feat2 = delta(wav_feature, 2)
@@ -21,19 +19,22 @@ def extract_MFCC(file):
     return feature_mfcc
 
 
-def getMFCC(datapath, train_num):
+def getMFCC(datapath):
+    labels = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
     MFCC = []
     files = os.listdir(datapath)  # 得到文件夹下的所有文件名称
-    for file in files:  # 遍历文件夹
+    for i in range(10):
         MFCC_rows = []
-        if file != "sequence":
-            paths = os.path.join(datapath, file)
-            paths = os.listdir(paths)
-            for open_path in paths:
-                file_name = os.path.join(datapath, file + '/' + open_path)
-                feature = extract_MFCC(file_name)
+        for file in files:  # 遍历文件夹
+            rule = re.compile(r'(.*?)_.*?')
+            label = re.findall(rule, str(file))
+            label = ''.join(label)
+            if label == labels[i]:
+                file_name = os.path.join(datapath, file)
+                fs, audio = wav.read(file_name)
+                feature = extract_MFCC(audio)
                 MFCC_rows.append(feature)
-            MFCC.append(MFCC_rows)
+                MFCC.append(MFCC_rows)
     return MFCC
 
 
@@ -112,26 +113,15 @@ def lowpass(wav_data, order, fre_c):
 def train_model(path):
     # 存储所有语音文件的 MFCC 特征
     # 读取已经用 HTK 计算好的 MFCC 特征
-    MFCC = getMFCC(path, 5)
+    MFCC = getMFCC(path)
     # 取出其中的模板命令的 MFCC 特征
     MFCC_models = getMFCCModels(MFCC)
+    print(MFCC_models.shape)
     return MFCC_models
 
 
 def speech_recognition(MFCC_models, wave_data):
-    wav.write("./test/recordedVoice_before.wav", 16000, wave_data)
-    # 对刚录制的语音进行端点检测
-    sample_frequency, audio_sequence = wav.read("./test/recordedVoice_before.wav")
-    filterData = lowpass(wave_data, 99, 5000 / sample_frequency)
-    end_point_detect = EndPointDetect(filterData)
-    # 存储端点检测后的语音文件
-    N = end_point_detect.wave_data_detected
-    m = 0
-    print(N)
-    while m < len(N):
-        save_wave_file("./test/recordedVoice_after.wav", wave_data[N[m] * 256: N[m + 1] * 256])
-        m = m + 2
-    MFCC_recorded = extract_MFCC("./test/recordedVoice_after.wav")
+    MFCC_recorded = extract_MFCC(wave_data)
 
     # 进行匹配
     flag = 0
