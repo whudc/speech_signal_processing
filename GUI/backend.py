@@ -41,13 +41,13 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)  # 创建窗体对象
-        self.start_record_test_pushButton.clicked.connect(self.start_recognition)
-        self.start_record_train_pushButton.clicked.connect(self.start_recode)
-        self.start_train_pushButton.clicked.connect(self.start_train)
-        self.single_digital_radioButton.setChecked(True)
-        self.single_digital_radioButton.setChecked(True)
-        self.zh_radioButton.setChecked(True)
-        self.en_radioButton.setChecked(False)
+        self.record_pushButton.clicked.connect(self.start_record)
+        self.recognition_pushButton.clicked.connect(self.start_recognition)
+        # self.start_train_pushButton.clicked.connect(self.start_train)
+        # self.single_digital_radioButton.setChecked(True)
+        # self.single_digital_radioButton.setChecked(True)
+        # self.zh_radioButton.setChecked(True)
+        # self.en_radioButton.setChecked(False)
 
         self.record_train_thread = None
         self.record_test_thread = None
@@ -59,19 +59,19 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
             2: 中文 数字序列
             3: 英文 数字序列
         """
-        # print("Loading Models")
-        # self.dl_en_model = SdrEnModel()
-        # self.ml_en_model = None
-        # self.dl_zh_model = SdrZhModel()
-        # self.ml_zh_model = None
-        # print("Models Loaded")
+        print("Loading Models")
+        self.dl_en_model = SdrEnModel()
+        self.ml_en_model = None
+        self.dl_zh_model = SdrZhModel()
+        self.ml_zh_model = None
+        print("Models Loaded")
 
     def mode_select(self):
-        if self.single_digital_radioButton.isChecked() and self.zh_radioButton.isChecked():
+        if self.single_radioButton.isChecked() and self.zh_radioButton.isChecked():
             self.mode = 0
-        elif self.single_digital_radioButton.isChecked() and self.en_radioButton.isChecked():
+        elif self.single_radioButton.isChecked() and self.en_radioButton.isChecked():
             self.mode = 1
-        elif self.digital_sequence_radioButton.isChecked() and self.zh_radioButton.isChecked():
+        elif self.seq_radioButton.isChecked() and self.zh_radioButton.isChecked():
             self.mode = 2
         else:
             self.mode = 3
@@ -111,7 +111,7 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         dlg.setText(data['msg'])
         dlg.exec()
 
-    def start_recode(self):
+    def start_record(self):
         self.mode_select()
         if self.mode == 0:
             self.single_record_train("dataset_zh/single")
