@@ -9,7 +9,7 @@ from Core.Wave2Vec import SdrEnModel, SdrZhModel
 from DTW_MFCC.VoiceRecog import train_model, speech_recognition
 from GUI.frontend import Ui_MainWindow
 
-from Utils.record import record_once
+from Utils.record import record_once, bandpass
 
 app = QApplication(sys.argv)
 
@@ -27,7 +27,9 @@ class GuiRecord(QThread):
 
     def run(self):
         try:
-            self.record_data = record_once(1, 16000, 3, self.label, output_dir=self.outputdir)
+            self.record_data = bandpass(record_once(1, 16000, 3, self.label, output_dir=self.outputdir))
+            self.record_data = self.record_data.reshape((len(self.record_data)))
+            # self.record_data = record_once(1, 16000, 3, self.label, output_dir=self.outputdir)
         except:
             self.finish_signal.emit({'status': 404, 'msg': 'Record Failed'})
             return
@@ -61,8 +63,10 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         """
         print("Loading Models")
         self.dl_en_model = SdrEnModel()
+        # self.dl_en_model = None
         self.ml_en_model = None
         self.dl_zh_model = SdrZhModel()
+        # self.dl_zh_model = None
         self.ml_zh_model = None
         print("Models Loaded")
 
@@ -112,15 +116,19 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
         dlg.exec()
 
     def start_record(self):
+
         self.mode_select()
-        if self.mode == 0:
-            self.single_record_train("dataset_zh/single")
-        elif self.mode == 1:
-            self.single_record_train("dataset_en/single")
-        elif self.mode == 2:
-            self.sequence_record_train("dataset_zh/seq/")
-        else:
-            self.sequence_record_train("dataset_en/seq/")
+        # if self.mode == 0:
+        #     self.single_record_train("dataset_zh/single")
+        # elif self.mode == 1:
+        #     self.single_record_train("dataset_en/single")
+        # elif self.mode == 2:
+        #     self.sequence_record_train("dataset_zh/seq/")
+        # else:
+        #     self.sequence_record_train("dataset_en/seq/")
+
+        self.record_test_thread = GuiRecord('test', 'test')
+        self.record_test_thread.run()
 
     def start_train(self):
         if self.mode == 0:
@@ -132,41 +140,42 @@ class SoundGuiBackend(QMainWindow, Ui_MainWindow):
     # TODO: 机器学习/深度学习选项组合
     def single_zh_recognition(self):
         data = self.record_test_thread.get_record()
-        if self.ml_radioButton.isChecked():
-            label = speech_recognition(self.ml_zh_model, np.array(data))
-            self.machine_learning_result_textBrowser.setText(str(label))
-        else:
-            label = self.dl_zh_model.predict_single(data)
-            self.deep_learning_result_textBrowser.setText(str(label))
+        # if self.ml_radioButton.isChecked():
+        #     label = speech_recognition(self.ml_zh_model, np.array(data))
+        #     self.machine_learning_result_textBrowser.setText(str(label))
+        # else:
+        label = self.dl_zh_model.predict_single(data)
+        self.result_textBrowser.setText(str(label))
 
     def single_en_recognition(self):
         data = self.record_test_thread.get_record()
-        if self.ml_radioButton.isChecked():
-            pass
-            # label = speech_recognition(self.ml_en_model, data)
-        else:
-            label = self.dl_en_model.predict_single(data)
-        self.deep_learning_result_textBrowser.setText(str(label))
+        # if self.ml_radioButton.isChecked():
+        #     pass
+        #     # label = speech_recognition(self.ml_en_model, data)
+        # else:
+        label = self.dl_en_model.predict_single(data)
+        self.result_textBrowser.setText(str(label))
 
     def sequence_zh_recognition(self):
         data = self.record_test_thread.get_record()
         labels = self.dl_zh_model.predict_seq(data)
-        self.deep_learning_result_textBrowser.setText(str(labels))
+        self.result_textBrowser.setText(str(labels))
         pass
 
     def sequence_en_recognition(self):
         data = self.record_test_thread.get_record()
         labels = self.dl_en_model.predict_seq(data)
-        self.deep_learning_result_textBrowser.setText(str(labels))
+        self.result_textBrowser.setText(str(labels))
         pass
 
     def start_recognition(self):
         # 先录制
-        self.record_test_thread = GuiRecord('test', 'test')
-        self.record_test_thread.run()
+        # self.record_test_thread = GuiRecord('test', 'test')
+        # self.record_test_thread.run()
         # while self.record_train_thread.isRunning():
         #     app.processEvents()
-        if self.record_test_thread.get_record() is None:
+
+        if self.record_test_thread is None or self.record_test_thread.get_record() is None:
             self.record_callback({'msg': 'Record Failed'})
             return
 

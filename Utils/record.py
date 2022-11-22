@@ -7,6 +7,8 @@ import sounddevice as sd
 from pydub import AudioSegment
 from scipy.io.wavfile import write
 
+from scipy.io.wavfile import write, read
+from scipy import signal
 
 def as2np(audiosegment: AudioSegment):
     samples = audiosegment.get_array_of_samples()
@@ -64,6 +66,14 @@ def record_once(CHANNELS, RATE, RECORD_SECONDS, label, output_dir):
     sd.play(myrecording, samplerate=RATE)
     sd.wait()
     return myrecording
+
+
+sos = signal.butter(99, [2 * 250, 2 * 3e3], fs=16000, output='sos', btype='bandpass')
+
+
+def bandpass(wav_data):
+    filtedData = signal.sosfilt(sos, wav_data)  # data为要过滤的信号
+    return filtedData.reshape((filtedData.shape[0],))
 
 
 if __name__ == "__main__":
